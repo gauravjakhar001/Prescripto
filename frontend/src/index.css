@@ -1,0 +1,28 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Outfit:wght@100..900&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #5f6FFF;
+  --grid-template-columns-auto: repeat(auto-fill, minmax(200px, 1fr));
+}
+
+*{
+  font-family: Outfit
+}
+
+ 
+.active hr  {
+  @apply block ;
+}
+
+
+@media (max-width: 740px) {
+  .active p {
+    background-color: var(--color-primary);
+    color: white;
+  }
+}
+
+
+
+
