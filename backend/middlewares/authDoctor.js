@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken'
+import env from 'dotenv'
 
 //DOCTOR authentication middleware
 

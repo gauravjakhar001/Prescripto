@@ -1,4 +1,5 @@
-import mongoose from "mongoose";
+import mongoose from "mongoose";    
+import env from 'dotenv'
 
 const connectDB = async ()=>{
 

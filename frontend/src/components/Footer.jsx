@@ -40,7 +40,7 @@ const Footer = () => {
      {/* Copyright text */}
     <div>
         <hr />
-        <p className='py-5 text-sm text-center'>Copyright 2026 - All Right Reserved.</p>
+        <p className='py-5 text-sm text-center'>Copyright 2026 - Gaurav Jakhar</p>
        
     </div>
 

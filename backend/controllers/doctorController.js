@@ -2,6 +2,7 @@ import doctorModel from "../models/doctorModel.js";
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import appointmentModel from "../models/appointmentModel.js";
+import env from 'dotenv'
 
 const changeAvailability = async(req,res)=>{
 
