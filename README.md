@@ -9,3 +9,7 @@
 - MERN Stack
 - Docker
 - GitHub Actions
+
+## Deployment
+- Frontend: Vercel
+- Backend: Render
