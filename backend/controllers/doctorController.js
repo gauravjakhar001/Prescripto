@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import appointmentModel from "../models/appointmentModel.js";
 import env from 'dotenv'
+import { toDocIdString, emptyDoctorDashMetrics } from '../utils/aggregationHelpers.js';
 
 const changeAvailability = async(req,res)=>{
 
@@ -30,7 +31,26 @@ const changeAvailability = async(req,res)=>{
 
 const doctorList = async (req,res) =>{
     try {
-        const doctors = await doctorModel.find({}).select(['-password' ,'-email']);
+        const { speciality, available } = req.query;
+        const pipeline = [];
+
+        const match = {};
+        if (speciality) match.speciality = speciality;
+        if (available !== undefined) {
+            match.available = available === 'true';
+        }
+        if (Object.keys(match).length > 0) {
+            pipeline.push({ $match: match });
+        }
+
+        pipeline.push({
+            $project: {
+                password: 0,
+                email: 0
+            }
+        });
+
+        const doctors = await doctorModel.aggregate(pipeline);
 
         res.json({
             success: true,
@@ -190,32 +210,54 @@ const doctorDashboard = async(req,res)=>{
     try {
 
         const {docId} = req.body;
+        const docIdStr = toDocIdString(docId);
 
-        const appointments = await appointmentModel.find({docId});
-
-        let earnings = 0 ;
-
-        appointments.map((item)=>{
-            if(item.isCompleted || item.payment){
-                earnings += item.amount;
+        const [result] = await appointmentModel.aggregate([
+            { $match: { docId: docIdStr } },
+            {
+                $facet: {
+                    metrics: [
+                        {
+                            $group: {
+                                _id: null,
+                                earnings: {
+                                    $sum: {
+                                        $cond: [
+                                            { $or: ['$isCompleted', '$payment'] },
+                                            '$amount',
+                                            0
+                                        ]
+                                    }
+                                },
+                                appointments: { $sum: 1 },
+                                patients: { $addToSet: '$userId' }
+                            }
+                        },
+                        {
+                            $project: {
+                                _id: 0,
+                                earnings: 1,
+                                appointments: 1,
+                                patients: { $size: '$patients' }
+                            }
+                        }
+                    ],
+                    latestAppointments: [
+                        { $sort: { date: -1 } },
+                        { $limit: 5 }
+                    ]
+                }
             }
-        });
+        ]);
 
-        //to get unique patients count for doctor dashboard
-        let patients = [];
+        const metrics = result?.metrics?.[0] ?? emptyDoctorDashMetrics();
 
-        appointments.map((item)=>{
-            if(!patients.includes(item.userId)){
-                patients.push(item.userId);
-            }
-        });
-
-        const dashData  = {
-            earnings,
-            appointments : appointments.length,
-            patients : patients.length,
-            latestAppointments : appointments.reverse().slice(0,5)
-        }
+        const dashData = {
+            earnings: metrics.earnings,
+            appointments: metrics.appointments,
+            patients: metrics.patients,
+            latestAppointments: result?.latestAppointments ?? []
+        };
         
         res.json({
             success :true,

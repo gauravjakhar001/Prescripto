@@ -16,6 +16,7 @@ const doctorSchema = new mongoose.Schema({
     slots_booked : {type : Object ,default: {}},
 },{minimize : false}); //this minimize false here is used to make this default{} make working well
 
+doctorSchema.index({ speciality: 1, available: 1 });
 
 const doctorModel = mongoose.models.doctor || mongoose.model('doctor',doctorSchema);
 

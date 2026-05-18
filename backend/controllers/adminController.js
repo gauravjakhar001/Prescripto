@@ -139,7 +139,9 @@ const allDoctors = async(req,res)=>{
 const appointmentsAdmin  = async(req,res)=>{
 
     try {
-        const appointments = await appointmentModel.find({});
+        const appointments = await appointmentModel.aggregate([
+            { $sort: { date: -1 } }
+        ]);
 
         res.json({
             success : true,
@@ -202,18 +204,27 @@ const adminDashboard  = async(req,res)=>{
 
     try {
 
-        const doctors = await doctorModel.find({});
-
-        const users = await userModel.find({});
-
-        const appointments = await appointmentModel.find({});
+        const [
+            doctorCountResult,
+            userCountResult,
+            appointmentCountResult,
+            latestAppointments
+        ] = await Promise.all([
+            doctorModel.aggregate([{ $count: 'total' }]),
+            userModel.aggregate([{ $count: 'total' }]),
+            appointmentModel.aggregate([{ $count: 'total' }]),
+            appointmentModel.aggregate([
+                { $sort: { date: -1 } },
+                { $limit: 5 }
+            ])
+        ]);
 
         const dashData = {
-            doctors : doctors.length,
-            appointments : appointments.length,
-            patients : users.length,
-            latestAppointments : appointments.reverse().slice(0,5)
-        }
+            doctors: doctorCountResult[0]?.total ?? 0,
+            appointments: appointmentCountResult[0]?.total ?? 0,
+            patients: userCountResult[0]?.total ?? 0,
+            latestAppointments
+        };
 
         res.json({
             success: true,
